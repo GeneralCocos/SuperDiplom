@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
 });
 
 // Подключение к MongoDB
-mongoose.connect('mongodb://localhost:27017/chess')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chess')
 .then(() => {
   console.log('Connected to MongoDB');
   
