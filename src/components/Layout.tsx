@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, Link as RouterLink } from 'react-router-dom';
+import { Outlet, Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -10,13 +10,15 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Avatar
+  Avatar,
+  Divider
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
 const Layout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const navigate = useNavigate();
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -29,6 +31,12 @@ const Layout: React.FC = () => {
   const handleLogout = () => {
     handleClose();
     logout();
+    navigate('/');
+  };
+
+  const handleNavigate = (path: string) => {
+    handleClose();
+    navigate(path);
   };
 
   return (
@@ -45,27 +53,38 @@ const Layout: React.FC = () => {
               color: 'inherit'
             }}
           >
-            RealDiploma
+            Шахматы
           </Typography>
 
           <Button
             color="inherit"
             component={RouterLink}
             to="/news"
+            sx={{ mr: 2 }}
           >
             Новости
           </Button>
 
           {isAuthenticated ? (
             <>
+              {user?.role === 'admin' && (
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/admin"
+                  sx={{ mr: 2 }}
+                >
+                  Админ панель
+                </Button>
+              )}
               <IconButton
-                size="large"
                 onClick={handleMenu}
                 color="inherit"
+                sx={{ ml: 2 }}
               >
                 <Avatar
-                  src={user?.avatar}
                   alt={user?.username}
+                  src={user?.avatar}
                   sx={{ width: 32, height: 32 }}
                 />
               </IconButton>
@@ -73,17 +92,20 @@ const Layout: React.FC = () => {
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
               >
-                <MenuItem
-                  component={RouterLink}
-                  to="/profile"
-                  onClick={handleClose}
-                >
-                  Профиль
+                <MenuItem onClick={() => handleNavigate('/profile')}>
+                  Мой профиль
                 </MenuItem>
-                <MenuItem onClick={handleLogout}>
-                  Выйти
-                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout}>Выйти</MenuItem>
               </Menu>
             </>
           ) : (
@@ -92,6 +114,7 @@ const Layout: React.FC = () => {
                 color="inherit"
                 component={RouterLink}
                 to="/login"
+                sx={{ mr: 2 }}
               >
                 Войти
               </Button>
@@ -107,7 +130,7 @@ const Layout: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <Container component="main" sx={{ flexGrow: 1, py: 4 }}>
+      <Container component="main" sx={{ flex: 1, py: 4 }}>
         <Outlet />
       </Container>
 
@@ -125,7 +148,7 @@ const Layout: React.FC = () => {
       >
         <Container maxWidth="sm">
           <Typography variant="body2" color="text.secondary" align="center">
-            © {new Date().getFullYear()} RealDiploma. Все права защищены.
+            © {new Date().getFullYear()} Шахматный портал
           </Typography>
         </Container>
       </Box>

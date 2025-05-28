@@ -1,24 +1,33 @@
-import { Router, Request, Response } from 'express';
-import { isAdmin } from '../middleware/auth';
+import { Router } from 'express';
+import { authenticate } from '../middleware/auth';
 import { UserController } from '../controllers/userController';
 
 const router = Router();
 const userController = new UserController();
 
-// User management routes
-router.get('/users', isAdmin, async (req: Request, res: Response) => {
+// Admin routes
+router.get('/users', authenticate, async (req, res) => {
   try {
     await userController.getAllUsers(req, res);
   } catch (error) {
-    res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-router.put('/users/:id/role', isAdmin, async (req: Request, res: Response) => {
+router.get('/stats', authenticate, async (req, res) => {
+  try {
+    // Add your stats logic here
+    res.json({ message: 'Admin stats route' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.put('/users/:id/role', authenticate, async (req, res) => {
   try {
     await userController.updateUserRole(req, res);
   } catch (error) {
-    res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

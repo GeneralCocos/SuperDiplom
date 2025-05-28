@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { User, AuthResponse } from '../types/api';
 
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  withCredentials: true
+});
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -17,6 +26,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Add axios interceptor for authentication
+  useEffect(() => {
+    const interceptor = api.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('token');
+        if (token && config.headers) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      api.interceptors.request.eject(interceptor);
+    };
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -26,22 +55,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfile = async (token: string) => {
     try {
-      const response = await axios.get<User>('http://localhost:5000/api/auth/profile', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get<User>('/auth/profile');
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Error fetching user profile:', error);
       localStorage.removeItem('token');
+      setUser(null);
       setIsAuthenticated(false);
     }
   };
 
-  const login = (token: string) => {
+  const login = async (token: string) => {
     localStorage.setItem('token', token);
-    setIsAuthenticated(true);
-    fetchUserProfile(token);
+    await fetchUserProfile(token);
   };
 
   const logout = () => {
@@ -51,24 +78,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (username: string, email: string, password: string, firstName?: string, lastName?: string) => {
-    const response = await axios.post<AuthResponse>('http://localhost:5000/api/auth/register', {
-      username,
-      email,
-      password,
-      firstName,
-      lastName
-    });
-    login(response.data.token);
+    try {
+      const response = await api.post<AuthResponse>('/auth/register', {
+        username,
+        email,
+        password,
+        firstName,
+        lastName
+      });
+      await login(response.data.token);
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      throw new Error(error.response?.data?.message || 'Ошибка при регистрации');
+    }
   };
 
   const updateUser = async (userData: Partial<User>) => {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('No token found');
-
-    const response = await axios.put<User>('http://localhost:5000/api/auth/profile', userData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setUser(response.data as User);
+    try {
+      const response = await api.put<User>('/auth/profile', userData);
+      setUser(response.data);
+    } catch (error: any) {
+      console.error('Update user error:', error);
+      throw new Error(error.response?.data?.message || 'Ошибка при обновлении профиля');
+    }
   };
 
   return (

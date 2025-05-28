@@ -28,16 +28,19 @@ const io = new Server(server, {
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/ai', aiRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);
-app.use('/api', adminRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/', routes);
 
 // Basic route
