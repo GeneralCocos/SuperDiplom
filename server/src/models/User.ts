@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: 'user' | 'admin';
+  avatarUrl?: string;
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -39,6 +40,10 @@ const userSchema = new Schema({
       message: 'Недопустимая роль пользователя'
     },
     default: 'user'
+  },
+  avatarUrl: {
+    type: String,
+    default: ''
   },
   createdAt: {
     type: Date,

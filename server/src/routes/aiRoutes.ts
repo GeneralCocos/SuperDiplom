@@ -1,18 +1,178 @@
-import express from 'express';
-import { ChessAI } from '../ai/chessAI';
-import { getAIMove, trainAI, evaluatePosition } from '../controllers/aiController';
+import { Router } from 'express';
+import { Chess } from 'chess.js';
 import { authenticate } from '../middleware/auth';
 
-const router = express.Router();
-const ai = new ChessAI();
+const router = Router();
 
-// Get AI move for a given position
-router.post('/move', authenticate, getAIMove);
+// Get AI move
+router.post('/move', authenticate, async (req, res) => {
+  try {
+    const { fen, difficulty = 'medium' } = req.body;
+    console.log('Received AI move request:', { fen, difficulty });
+    
+    const game = new Chess(fen);
+    const moves = game.moves();
+    
+    if (moves.length === 0) {
+      console.log('No moves available');
+      return res.status(400).json({ message: 'Нет доступных ходов' });
+    }
 
-// Train AI with new positions (protected route)
-router.post('/train', authenticate, trainAI);
+    console.log('Available moves:', moves);
 
-// Evaluate a position
-router.post('/evaluate', evaluatePosition);
+    let selectedMove;
+    switch (difficulty) {
+      case 'easy':
+        // Random move
+        selectedMove = moves[Math.floor(Math.random() * moves.length)];
+        console.log('Easy mode - selected random move:', selectedMove);
+        break;
+      case 'medium':
+        // Evaluate moves based on piece values and position
+        selectedMove = evaluateMoves(game, moves);
+        console.log('Medium mode - selected evaluated move:', selectedMove);
+        break;
+      case 'hard':
+        // Use minimax algorithm with alpha-beta pruning
+        selectedMove = minimax(game, 3, -Infinity, Infinity, true);
+        console.log('Hard mode - selected minimax move:', selectedMove);
+        break;
+      default:
+        selectedMove = moves[Math.floor(Math.random() * moves.length)];
+        console.log('Default mode - selected random move:', selectedMove);
+    }
+
+    // Make the move
+    const moveResult = game.move(selectedMove);
+    if (!moveResult) {
+      console.error('Invalid move:', selectedMove);
+      return res.status(400).json({ message: 'Недопустимый ход' });
+    }
+
+    console.log('Move made successfully:', moveResult);
+    
+    res.json({
+      move: selectedMove,
+      fen: game.fen()
+    });
+  } catch (error) {
+    console.error('AI move error:', error);
+    res.status(500).json({ message: 'Ошибка при получении хода ИИ' });
+  }
+});
+
+// Helper function to evaluate moves
+function evaluateMoves(game: Chess, moves: string[]): string {
+  const pieceValues: { [key: string]: number } = {
+    'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0
+  };
+
+  let bestMove = moves[0];
+  let bestScore = -Infinity;
+
+  for (const move of moves) {
+    const tempGame = new Chess(game.fen());
+    const moveResult = tempGame.move(move);
+    if (!moveResult) continue;
+    
+    let score = 0;
+    const board = tempGame.board();
+    
+    // Evaluate piece values and position
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        const piece = board[i][j];
+        if (piece) {
+          const value = pieceValues[piece.type.toLowerCase()];
+          score += piece.color === 'w' ? value : -value;
+        }
+      }
+    }
+
+    // Add position bonus
+    score += evaluatePosition(tempGame);
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = move;
+    }
+  }
+
+  return bestMove;
+}
+
+// Helper function to evaluate position
+function evaluatePosition(game: Chess): number {
+  let score = 0;
+  
+  // Check for checkmate
+  if (game.isCheckmate()) {
+    return game.turn() === 'w' ? -1000 : 1000;
+  }
+
+  // Check for check
+  if (game.isCheck()) {
+    score += game.turn() === 'w' ? -50 : 50;
+  }
+
+  // Evaluate piece mobility
+  const moves = game.moves().length;
+  score += game.turn() === 'w' ? moves : -moves;
+
+  // Add center control bonus
+  const centerSquares = ['d4', 'd5', 'e4', 'e5'];
+  for (const square of centerSquares) {
+    const piece = game.get(square as any);
+    if (piece) {
+      score += piece.color === 'w' ? 10 : -10;
+    }
+  }
+
+  return score;
+}
+
+// Minimax algorithm with alpha-beta pruning
+function minimax(game: Chess, depth: number, alpha: number, beta: number, maximizingPlayer: boolean): string {
+  if (depth === 0 || game.isGameOver()) {
+    return evaluatePosition(game).toString();
+  }
+
+  const moves = game.moves();
+  let bestMove = moves[0];
+
+  if (maximizingPlayer) {
+    let maxEval = -Infinity;
+    for (const move of moves) {
+      const tempGame = new Chess(game.fen());
+      const moveResult = tempGame.move(move);
+      if (!moveResult) continue;
+
+      const evaluation = Number(minimax(tempGame, depth - 1, alpha, beta, false));
+      if (evaluation > maxEval) {
+        maxEval = evaluation;
+        bestMove = move;
+      }
+      alpha = Math.max(alpha, evaluation);
+      if (beta <= alpha) break;
+    }
+    return bestMove;
+  } else {
+    let minEval = Infinity;
+    for (const move of moves) {
+      const tempGame = new Chess(game.fen());
+      const moveResult = tempGame.move(move);
+      if (!moveResult) continue;
+
+      const evaluation = Number(minimax(tempGame, depth - 1, alpha, beta, true));
+      if (evaluation < minEval) {
+        minEval = evaluation;
+        bestMove = move;
+      }
+      beta = Math.min(beta, evaluation);
+      if (beta <= alpha) break;
+    }
+    return bestMove;
+  }
+}
 
 export default router; 

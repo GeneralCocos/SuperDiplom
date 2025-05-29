@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = require("../models/User");
 const auth_1 = require("../middleware/auth");
@@ -127,6 +128,29 @@ router.get('/profile', auth_1.authenticate, (req, res) => __awaiter(void 0, void
     catch (error) {
         console.error('Profile error:', error);
         res.status(500).json({ message: 'Ошибка при получении профиля' });
+    }
+}));
+router.post('/change-password', auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        const user = yield User_1.User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+        // Проверка старого пароля
+        const isMatch = yield bcryptjs_1.default.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Неверный текущий пароль' });
+        }
+        // Хеширование нового пароля
+        const salt = yield bcryptjs_1.default.genSalt(10);
+        user.password = yield bcryptjs_1.default.hash(newPassword, salt);
+        yield user.save();
+        res.json({ message: 'Пароль успешно изменен' });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Ошибка сервера' });
     }
 }));
 exports.default = router;

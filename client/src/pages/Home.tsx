@@ -28,7 +28,7 @@ const Home = () => {
             variant="outlined"
             color="secondary"
             size="large"
-            onClick={() => navigate('/learn')}
+            onClick={() => navigate('/learning')}
           >
             Обучение
           </Button>

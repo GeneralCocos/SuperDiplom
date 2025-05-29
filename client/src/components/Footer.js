@@ -22,25 +22,26 @@ const Footer = () => {
     <Box
       component="footer"
       sx={{
-        backgroundColor: (theme) => theme.palette.grey[100],
+        backgroundColor: (theme) => theme.palette.background.paper,
         p: 6,
         mt: 'auto',
+        borderTop: '1px solid',
+        borderColor: 'divider'
       }}
     >
       <Container maxWidth="lg">
         <Grid container spacing={4}>
           <Grid item xs={12} sm={4}>
             <Typography variant="h6" color="text.primary" gutterBottom>
-              About Us
+              О нас
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              We are dedicated to providing the best chess learning experience
-              with advanced AI technology and a vibrant community of players.
+              Мы стремимся предоставить лучший опыт обучения шахматам с использованием передовых технологий ИИ и активного сообщества игроков.
             </Typography>
           </Grid>
           <Grid item xs={12} sm={4}>
             <Typography variant="h6" color="text.primary" gutterBottom>
-              Quick Links
+              Быстрые ссылки
             </Typography>
             <Link
               component={RouterLink}
@@ -49,16 +50,16 @@ const Footer = () => {
               display="block"
               sx={{ mb: 1 }}
             >
-              Play Chess
+              Играть
             </Link>
             <Link
               component={RouterLink}
-              to="/learn"
+              to="/learning"
               color="text.secondary"
               display="block"
               sx={{ mb: 1 }}
             >
-              Learn
+              Обучение
             </Link>
             <Link
               component={RouterLink}
@@ -67,12 +68,12 @@ const Footer = () => {
               display="block"
               sx={{ mb: 1 }}
             >
-              Chess News
+              Новости
             </Link>
           </Grid>
           <Grid item xs={12} sm={4}>
             <Typography variant="h6" color="text.primary" gutterBottom>
-              Connect With Us
+              Связаться с нами
             </Typography>
             <Box>
               <IconButton
@@ -128,12 +129,12 @@ const Footer = () => {
           color="text.secondary"
           align="center"
         >
-          {'Copyright © '}
+          {'© '}
           <Link color="inherit" component={RouterLink} to="/">
-            Chess Platform
+            Шахматная Академия
           </Link>{' '}
           {new Date().getFullYear()}
-          {'. All rights reserved.'}
+          {'. Все права защищены.'}
         </Typography>
       </Container>
     </Box>

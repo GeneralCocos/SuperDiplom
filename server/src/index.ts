@@ -10,6 +10,8 @@ import { initializeAI } from './ai';
 import adminRoutes from './routes/adminRoutes';
 import aiRoutes from './routes/aiRoutes';
 import routes from './routes';
+import gameHistoryRoutes from './routes/gameHistoryRoutes';
+import path from 'path';
 
 // Load environment variables
 dotenv.config();
@@ -36,11 +38,15 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Статическая раздача файлов
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/game-history', gameHistoryRoutes);
 app.use('/', routes);
 
 // Basic route

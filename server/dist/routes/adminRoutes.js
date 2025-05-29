@@ -14,21 +14,30 @@ const auth_1 = require("../middleware/auth");
 const userController_1 = require("../controllers/userController");
 const router = (0, express_1.Router)();
 const userController = new userController_1.UserController();
-// User management routes
-router.get('/users', auth_1.isAdmin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// Admin routes
+router.get('/users', auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield userController.getAllUsers(req, res);
     }
     catch (error) {
-        res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+        res.status(500).json({ message: 'Server error' });
     }
 }));
-router.put('/users/:id/role', auth_1.isAdmin, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/stats', auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Add your stats logic here
+        res.json({ message: 'Admin stats route' });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+}));
+router.put('/users/:id/role', auth_1.authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield userController.updateUserRole(req, res);
     }
     catch (error) {
-        res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+        res.status(500).json({ message: 'Server error' });
     }
 }));
 exports.default = router;

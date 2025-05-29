@@ -15,6 +15,7 @@ const ai_1 = require("./ai");
 const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const aiRoutes_1 = __importDefault(require("./routes/aiRoutes"));
 const routes_1 = __importDefault(require("./routes"));
+const gameHistoryRoutes_1 = __importDefault(require("./routes/gameHistoryRoutes"));
 // Load environment variables
 dotenv_1.default.config();
 // Initialize Express app
@@ -30,22 +31,25 @@ const io = new socket_io_1.Server(server, {
 // Middleware
 app.use((0, cors_1.default)({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 // Routes
-app.use('/api/ai', aiRoutes_1.default);
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/games', gameRoutes_1.default);
-app.use('/api', adminRoutes_1.default);
+app.use('/api/ai', aiRoutes_1.default);
+app.use('/api/admin', adminRoutes_1.default);
+app.use('/api/game-history', gameHistoryRoutes_1.default);
 app.use('/', routes_1.default);
 // Basic route
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to RealDiploma Chess Platform API' });
 });
 // Подключение к MongoDB
-mongoose_1.default.connect('mongodb://localhost:27017/chess')
+mongoose_1.default.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chess')
     .then(() => {
     console.log('Connected to MongoDB');
     // Initialize AI after database connection
