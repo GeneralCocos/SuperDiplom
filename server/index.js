@@ -3,6 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const newsRoutes = require('./routes/news');
+const authRoutes = require('./routes/auth');
+const taskRoutes = require('./routes/tasks');
 
 const app = express();
 
@@ -20,6 +22,8 @@ mongoose.connect('mongodb://localhost:27017/chess', {
 
 // Маршруты
 app.use('/api/news', newsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // Обработка ошибок
 app.use((err, req, res, next) => {

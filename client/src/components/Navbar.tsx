@@ -46,6 +46,13 @@ const Navbar: React.FC = () => {
             <Button
               color="inherit"
               component={RouterLink}
+              to="/tasks"
+            >
+              Задания
+            </Button>
+            <Button
+              color="inherit"
+              component={RouterLink}
               to="/play"
             >
               Играть
@@ -67,6 +74,15 @@ const Navbar: React.FC = () => {
                 >
                   Личный кабинет
                 </Button>
+                {user?.role === 'admin' && (
+                  <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/admin/news"
+                  >
+                    Управление новостями
+                  </Button>
+                )}
                 <Button
                   color="inherit"
                   onClick={logout}

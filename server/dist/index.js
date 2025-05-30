@@ -16,6 +16,7 @@ const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const aiRoutes_1 = __importDefault(require("./routes/aiRoutes"));
 const routes_1 = __importDefault(require("./routes"));
 const gameHistoryRoutes_1 = __importDefault(require("./routes/gameHistoryRoutes"));
+const path_1 = __importDefault(require("path"));
 // Load environment variables
 dotenv_1.default.config();
 // Initialize Express app
@@ -37,6 +38,8 @@ app.use((0, cors_1.default)({
 }));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+// Статическая раздача файлов
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
 // Routes
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/games', gameRoutes_1.default);

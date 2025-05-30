@@ -10,11 +10,14 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Play from './pages/Play';
 import Learning from './pages/Learning';
+import Tasks from './pages/Tasks';
+import AdminNews from './pages/AdminNews';
 import GameHistory from './pages/GameHistory';
 import PrivateRoute from './components/PrivateRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { GameProvider } from './contexts/GameContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -53,6 +56,22 @@ function App() {
                   }
                 />
                 <Route
+                  path="/tasks"
+                  element={
+                    <PrivateRoute>
+                      <Tasks />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin/news"
+                  element={
+                    <PrivateRoute>
+                      <AdminNews />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
                   path="/history"
                   element={
                     <PrivateRoute>
@@ -60,6 +79,7 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
           </GameProvider>
