@@ -6,64 +6,94 @@ import {
   DialogActions,
   TextField,
   Button,
-  Box,
-  Typography
+  Alert
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
+
+// Определяем базовый URL для API
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 interface LoginModalProps {
   open: boolean;
   onClose: () => void;
 }
 
+interface AuthResponse {
+  token: string;
+  user: {
+    _id: string;
+    email: string;
+    role: 'user' | 'admin';
+    username: string;
+  };
+}
+
 const LoginModal: React.FC<LoginModalProps> = ({ open, onClose }) => {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+    
     try {
-      await login(email, password);
+      const response = await axios.post<AuthResponse>(`${API_URL}/api/auth/login`, {
+        email,
+        password
+      });
+      
+      const { token } = response.data;
+      await login(token);
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка при входе');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Вход</DialogTitle>
+      <DialogTitle>Вход в систему</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && (
-            <Typography color="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2 }}>
               {error}
-            </Typography>
+            </Alert>
           )}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              fullWidth
-            />
-            <TextField
-              label="Пароль"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              fullWidth
-            />
-          </Box>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Email"
+            type="email"
+            fullWidth
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={loading}
+          />
+          <TextField
+            margin="dense"
+            label="Пароль"
+            type="password"
+            fullWidth
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>Отмена</Button>
-          <Button type="submit" variant="contained" color="primary">
+          <Button onClick={onClose} disabled={loading}>
+            Отмена
+          </Button>
+          <Button type="submit" variant="contained" disabled={loading}>
             Войти
           </Button>
         </DialogActions>

@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import Play from './pages/Play';
 import Learning from './pages/Learning';
 import Tasks from './pages/Tasks';
+import News from './pages/News';
 import AdminNews from './pages/AdminNews';
 import GameHistory from './pages/GameHistory';
 import PrivateRoute from './components/PrivateRoute';
@@ -63,10 +64,11 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                <Route path="/news" element={<News />} />
                 <Route
                   path="/admin/news"
                   element={
-                    <PrivateRoute>
+                    <PrivateRoute requireAdmin>
                       <AdminNews />
                     </PrivateRoute>
                   }

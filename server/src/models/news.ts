@@ -1,11 +1,11 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 interface INews extends Document {
   title: string;
   content: string;
   imageUrl: string;
   category: 'tournament' | 'education' | 'event' | 'other';
-  author: string;
+  author: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,7 +31,8 @@ const newsSchema = new Schema<INews>({
     default: 'other'
   },
   author: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   createdAt: {

@@ -1,34 +1,55 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
+import { useAuth } from './AuthContext';
+
+type SocketType = ReturnType<typeof io>;
 
 interface WebSocketContextType {
-  socket: ReturnType<typeof io> | null;
+  socket: SocketType | null;
   isConnected: boolean;
 }
 
-const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
+const WebSocketContext = createContext<WebSocketContextType>({
+  socket: null,
+  isConnected: false
+});
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [socket, setSocket] = useState<ReturnType<typeof io> | null>(null);
+  const [socket, setSocket] = useState<SocketType | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000');
+    if (!user) return;
 
-    newSocket.on('connect', () => {
+    const socketInstance = io(process.env.REACT_APP_WS_URL || 'http://localhost:5000', {
+      auth: {
+        token: localStorage.getItem('token')
+      }
+    });
+
+    socketInstance.on('connect', () => {
+      console.log('WebSocket connected');
       setIsConnected(true);
     });
 
-    newSocket.on('disconnect', () => {
+    socketInstance.on('disconnect', () => {
+      console.log('WebSocket disconnected');
       setIsConnected(false);
     });
 
-    setSocket(newSocket);
+    socketInstance.on('error', (error: Error) => {
+      console.error('WebSocket error:', error);
+    });
+
+    setSocket(socketInstance);
 
     return () => {
-      newSocket.close();
+      if (socketInstance) {
+        socketInstance.disconnect();
+      }
     };
-  }, []);
+  }, [user]);
 
   return (
     <WebSocketContext.Provider value={{ socket, isConnected }}>

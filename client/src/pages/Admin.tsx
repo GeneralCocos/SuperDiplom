@@ -29,6 +29,9 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+// Определяем базовый URL для API
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -119,25 +122,60 @@ const Admin: React.FC = () => {
 
   const fetchNews = async () => {
     try {
-      const response = await axios.get<NewsItem[]>('http://localhost:5000/api/news');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get<NewsItem[]>(`${API_URL}/api/news`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setNews(response.data);
     } catch (error) {
       console.error('Error fetching news:', error);
+      setError('Ошибка при загрузке новостей');
     }
   };
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get<User[]>('http://localhost:5000/api/users');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get<User[]>(`${API_URL}/api/users`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setError('Ошибка при загрузке пользователей');
     }
   };
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get<Task[]>('http://localhost:5000/api/tasks');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get<Task[]>(`${API_URL}/api/tasks`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -147,36 +185,83 @@ const Admin: React.FC = () => {
 
   const handleAddNews = async () => {
     try {
-      await axios.post('http://localhost:5000/api/news', newNews);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      await axios.post(`${API_URL}/api/news`, newNews, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setOpenNewsDialog(false);
       setNewNews({ title: '', content: '', imageUrl: '' });
       fetchNews();
     } catch (error) {
       console.error('Error adding news:', error);
+      setError('Ошибка при добавлении новости');
     }
   };
 
   const handleDeleteNews = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/news/${id}`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      await axios.delete(`${API_URL}/api/news/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       fetchNews();
     } catch (error) {
       console.error('Error deleting news:', error);
+      setError('Ошибка при удалении новости');
     }
   };
 
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     try {
-      await axios.put(`http://localhost:5000/api/users/${userId}/role`, { role: newRole });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      await axios.put(`${API_URL}/api/users/${userId}/role`, { role: newRole }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       fetchUsers();
     } catch (error) {
       console.error('Error updating user role:', error);
+      setError('Ошибка при обновлении роли пользователя');
     }
   };
 
   const handleAddTask = async () => {
     try {
-      await axios.post('http://localhost:5000/api/tasks', newTask);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      await axios.post(`${API_URL}/api/tasks`, newTask, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setOpenTaskDialog(false);
       setNewTask({
         title: '',
@@ -196,7 +281,18 @@ const Admin: React.FC = () => {
 
   const handleDeleteTask = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/tasks/${id}`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      await axios.delete(`${API_URL}/api/tasks/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);

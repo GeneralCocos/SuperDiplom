@@ -17,7 +17,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3",
     "react-scripts": "5.0.1",
-    "socket.io-client": "^4.7.4",
+    "socket.io-client": "^4.8.1",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
@@ -27,7 +27,7 @@
     "@types/react": "^18.3.21",
     "@types/react-dom": "^18.3.7",
     "@types/react-router-dom": "^5.3.3",
-    "@types/socket.io-client": "^1.4.36",
+    "@types/socket.io-client": "^3.0.0",
     "typescript": "^5.8.3"
   },
   "scripts": {

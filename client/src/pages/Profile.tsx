@@ -15,17 +15,37 @@ import {
   Avatar,
   Tabs,
   Tab,
-  IconButton
+  IconButton,
+  Chip
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import GameHistory from '../components/GameHistory';
 import { PhotoCamera } from '@mui/icons-material';
 
+// Определяем базовый URL для API
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
+}
+
+interface Achievement {
+  _id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlockedAt?: string;
+}
+
+interface Friend {
+  _id: string;
+  username: string;
+  avatarUrl?: string;
+  rating: number;
+  status: 'online' | 'offline' | 'in_game';
 }
 
 function TabPanel(props: TabPanelProps) {
@@ -62,13 +82,35 @@ const Profile: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user?.avatarUrl) {
       setAvatarUrl(user.avatarUrl);
     }
+    fetchAchievements();
+    fetchFriends();
   }, [user]);
+
+  const fetchAchievements = async () => {
+    try {
+      const response = await axios.get<Achievement[]>(`${API_URL}/api/achievements`);
+      setAchievements(response.data);
+    } catch (error) {
+      console.error('Error fetching achievements:', error);
+    }
+  };
+
+  const fetchFriends = async () => {
+    try {
+      const response = await axios.get<Friend[]>(`${API_URL}/api/friends`);
+      setFriends(response.data);
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+    }
+  };
 
   // Если пользователь не авторизован, показываем сообщение
   if (!user) {
@@ -234,6 +276,8 @@ const Profile: React.FC = () => {
               <Tabs value={tabValue} onChange={handleTabChange}>
                 <Tab label="Настройки" />
                 <Tab label="История игр" />
+                <Tab label="Достижения" />
+                <Tab label="Друзья" />
               </Tabs>
             </Box>
 
@@ -300,6 +344,72 @@ const Profile: React.FC = () => {
 
             <TabPanel value={tabValue} index={1}>
               <GameHistory />
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={2}>
+              <Typography variant="h6" gutterBottom>
+                Ваши достижения
+              </Typography>
+              <Grid container spacing={2}>
+                {achievements.map((achievement) => (
+                  <Grid item xs={12} sm={6} md={4} key={achievement._id}>
+                    <Card>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="h6" component="div">
+                            {achievement.title}
+                          </Typography>
+                        </Box>
+                        <Typography color="text.secondary" gutterBottom>
+                          {achievement.description}
+                        </Typography>
+                        {achievement.unlockedAt && (
+                          <Typography variant="caption" color="success.main">
+                            Получено: {new Date(achievement.unlockedAt).toLocaleDateString('ru-RU')}
+                          </Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+              <Typography variant="h6" gutterBottom>
+                Ваши друзья
+              </Typography>
+              <Grid container spacing={2}>
+                {friends.map((friend) => (
+                  <Grid item xs={12} sm={6} md={4} key={friend._id}>
+                    <Card>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar src={friend.avatarUrl}>
+                            {friend.username.charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="h6">
+                              {friend.username}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Рейтинг: {friend.rating}
+                            </Typography>
+                            <Chip
+                              size="small"
+                              label={friend.status === 'online' ? 'В сети' : 
+                                    friend.status === 'in_game' ? 'В игре' : 'Не в сети'}
+                              color={friend.status === 'online' ? 'success' : 
+                                    friend.status === 'in_game' ? 'warning' : 'default'}
+                              sx={{ mt: 1 }}
+                            />
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
             </TabPanel>
           </Paper>
         </Grid>

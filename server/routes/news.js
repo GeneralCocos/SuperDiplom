@@ -10,11 +10,12 @@ router.get('/', async (req, res) => {
     const news = await News.find().sort({ createdAt: -1 });
     res.json(news);
   } catch (error) {
+    console.error('Error fetching news:', error);
     res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 
-// Получить новость по ID
+// Получить одну новость
 router.get('/:id', async (req, res) => {
   try {
     const news = await News.findById(req.params.id);
@@ -23,6 +24,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json(news);
   } catch (error) {
+    console.error('Error fetching news:', error);
     res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
@@ -40,6 +42,7 @@ router.post('/', [auth, adminAuth], async (req, res) => {
     await news.save();
     res.status(201).json(news);
   } catch (error) {
+    console.error('Error creating news:', error);
     res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
@@ -58,6 +61,7 @@ router.put('/:id', [auth, adminAuth], async (req, res) => {
     }
     res.json(news);
   } catch (error) {
+    console.error('Error updating news:', error);
     res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
@@ -71,6 +75,7 @@ router.delete('/:id', [auth, adminAuth], async (req, res) => {
     }
     res.json({ message: 'Новость удалена' });
   } catch (error) {
+    console.error('Error deleting news:', error);
     res.status(500).json({ message: 'Ошибка сервера' });
   }
 });

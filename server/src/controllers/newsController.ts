@@ -1,13 +1,18 @@
 import { Request, Response } from 'express';
 import { News } from '../models/news';
 import { Router } from 'express';
+import { authenticate } from '../middleware/auth';
+import { isAdmin } from '../middleware/isAdmin';
+import mongoose from 'mongoose';
 
 const router = Router();
 
 // Получить все новости
 const getAllNews = async (req: Request, res: Response) => {
   try {
-    const news = await News.find().sort({ createdAt: -1 });
+    const news = await News.find()
+      .sort({ createdAt: -1 })
+      .populate('author', 'username');
     res.json(news);
   } catch (error) {
     console.error('Ошибка при получении новостей:', error);
@@ -18,7 +23,7 @@ const getAllNews = async (req: Request, res: Response) => {
 // Получить одну новость
 const getNewsById = async (req: Request, res: Response) => {
   try {
-    const news = await News.findById(req.params.id);
+    const news = await News.findById(req.params.id).populate('author', 'username');
     if (!news) {
       return res.status(404).json({ message: 'Новость не найдена' });
     }
@@ -29,43 +34,38 @@ const getNewsById = async (req: Request, res: Response) => {
   }
 };
 
-// Создать новость
+// Создать новость (только для админа)
 const createNews = async (req: Request, res: Response) => {
   try {
-    console.log('Получены данные для создания новости:', req.body);
-    
+    if (!req.user) {
+      return res.status(401).json({ message: 'Требуется авторизация' });
+    }
+
     const { title, content, imageUrl, category } = req.body;
     const news = new News({
       title,
       content,
       imageUrl,
       category,
-      author: 'Администратор'
+      author: new mongoose.Types.ObjectId(req.user.userId)
     });
-
-    console.log('Создан объект новости:', news);
-
-    const savedNews = await news.save();
-    console.log('Новость успешно сохранена:', savedNews);
+    await news.save();
     
-    res.status(201).json(savedNews);
+    const populatedNews = await News.findById(news._id).populate('author', 'username');
+    res.status(201).json(populatedNews);
   } catch (error) {
-    console.error('Подробная ошибка при создании новости:', error);
-    res.status(500).json({ 
-      message: 'Ошибка при создании новости', 
-      error: (error as Error).message,
-      details: error instanceof Error && 'errors' in error ? 
-        Object.keys((error as any).errors).map(key => ({
-          field: key,
-          message: (error as any).errors[key].message
-        })) : null
-    });
+    console.error('Ошибка при создании новости:', error);
+    res.status(500).json({ message: 'Ошибка при создании новости', error: (error as Error).message });
   }
 };
 
 // Обновить новость
 const updateNews = async (req: Request, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Требуется авторизация' });
+    }
+
     const { title, content, imageUrl, category } = req.body;
     const updatedNews = await News.findByIdAndUpdate(
       req.params.id,
@@ -77,7 +77,7 @@ const updateNews = async (req: Request, res: Response) => {
         updatedAt: Date.now()
       },
       { new: true }
-    );
+    ).populate('author', 'username');
 
     if (!updatedNews) {
       return res.status(404).json({ message: 'Новость не найдена' });
@@ -90,15 +90,18 @@ const updateNews = async (req: Request, res: Response) => {
   }
 };
 
-// Удалить новость
+// Удалить новость (только для админа)
 const deleteNews = async (req: Request, res: Response) => {
   try {
-    const deletedNews = await News.findByIdAndDelete(req.params.id);
-    if (!deletedNews) {
-      return res.status(404).json({ message: 'Новость не найдена' });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Требуется авторизация' });
     }
 
-    res.json({ message: 'Новость успешно удалена' });
+    const news = await News.findByIdAndDelete(req.params.id);
+    if (!news) {
+      return res.status(404).json({ message: 'Новость не найдена' });
+    }
+    res.json({ message: 'Новость удалена' });
   } catch (error) {
     console.error('Ошибка при удалении новости:', error);
     res.status(500).json({ message: 'Ошибка при удалении новости', error: (error as Error).message });
@@ -108,8 +111,8 @@ const deleteNews = async (req: Request, res: Response) => {
 // Маршруты
 router.get('/', getAllNews);
 router.get('/:id', getNewsById);
-router.post('/', createNews);
-router.put('/:id', updateNews);
-router.delete('/:id', deleteNews);
+router.post('/', [authenticate, isAdmin], createNews);
+router.put('/:id', [authenticate, isAdmin], updateNews);
+router.delete('/:id', [authenticate, isAdmin], deleteNews);
 
 export default router; 

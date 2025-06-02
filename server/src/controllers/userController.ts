@@ -6,11 +6,11 @@ export class UserController {
   // Получение профиля пользователя
   async getProfile(req: Request, res: Response) {
     try {
-      if (!req.user?.id) {
+      if (!req.user?.userId) {
         return res.status(401).json({ message: 'Не авторизован' });
       }
       
-      const user = await User.findById(req.user.id).select('-password');
+      const user = await User.findById(req.user.userId).select('-password');
       if (!user) {
         return res.status(404).json({ message: 'Пользователь не найден' });
       }
@@ -23,11 +23,11 @@ export class UserController {
   // Обновление профиля пользователя
   async updateProfile(req: Request, res: Response) {
     try {
-      if (!req.user?.id) {
+      if (!req.user?.userId) {
         return res.status(401).json({ message: 'Не авторизован' });
       }
 
-      const user = await User.findById(req.user.id);
+      const user = await User.findById(req.user.userId);
       if (!user) {
         return res.status(404).json({ message: 'Пользователь не найден' });
       }

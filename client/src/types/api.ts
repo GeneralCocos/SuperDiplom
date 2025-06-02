@@ -47,15 +47,49 @@ export interface GameResponse {
   gameOver: boolean;
 }
 
-export interface AIMoveResponse {
-  move: string;
-  fen: string;
-  isCheck: boolean;
-  isCheckmate: boolean;
-  isStalemate: boolean;
-}
-
 export interface MoveResponse {
   position: string;
   gameOver: boolean;
+}
+
+export interface Tournament {
+  _id: string;
+  name: string;
+  creator: {
+    _id: string;
+    username: string;
+  };
+  participants: Array<{
+    _id: string;
+    username: string;
+  }>;
+  maxParticipants: number;
+  status: 'waiting' | 'in_progress' | 'completed';
+  startTime?: Date;
+  endTime?: Date;
+  winner?: {
+    _id: string;
+    username: string;
+  };
+  rounds: Array<{
+    number: number;
+    matches: Array<{
+      whitePlayer: {
+        _id: string;
+        username: string;
+      };
+      blackPlayer: {
+        _id: string;
+        username: string;
+      };
+      result: 'white' | 'black' | 'draw' | 'pending';
+      moves: Array<{
+        from: string;
+        to: string;
+        promotion?: string;
+      }>;
+    }>;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 } 

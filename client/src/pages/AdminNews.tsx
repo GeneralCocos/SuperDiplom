@@ -13,10 +13,15 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  CircularProgress
 } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+// Определяем базовый URL для API
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 interface News {
   _id: string;
@@ -28,6 +33,7 @@ interface News {
 
 const AdminNews: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [news, setNews] = useState<News[]>([]);
   const [open, setOpen] = useState(false);
   const [editingNews, setEditingNews] = useState<News | null>(null);
@@ -38,17 +44,41 @@ const AdminNews: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user?.role !== 'admin') {
+      navigate('/');
+      return;
+    }
     fetchNews();
-  }, []);
+  }, [user, navigate]);
 
   const fetchNews = async () => {
     try {
-      const response = await axios.get<News[]>('/api/news');
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.get<News[]>(`${API_URL}/api/news`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setNews(response.data);
-    } catch (error) {
-      setError('Ошибка при загрузке новостей');
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        setError('Необходима авторизация');
+        navigate('/login');
+      } else {
+        setError('Ошибка при загрузке новостей');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,31 +114,73 @@ const AdminNews: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Необходима авторизация');
+        navigate('/login');
+        return;
+      }
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
       if (editingNews) {
-        await axios.put(`/api/news/${editingNews._id}`, formData);
+        await axios.put(`${API_URL}/api/news/${editingNews._id}`, formData, config);
         setSuccess('Новость обновлена');
       } else {
-        await axios.post('/api/news', formData);
+        await axios.post(`${API_URL}/api/news`, formData, config);
         setSuccess('Новость создана');
       }
       handleClose();
       fetchNews();
-    } catch (error) {
-      setError('Ошибка при сохранении новости');
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        setError('Необходима авторизация');
+        navigate('/login');
+      } else {
+        setError('Ошибка при сохранении новости');
+      }
     }
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Вы уверены, что хотите удалить эту новость?')) {
       try {
-        await axios.delete(`/api/news/${id}`);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Необходима авторизация');
+          navigate('/login');
+          return;
+        }
+
+        await axios.delete(`${API_URL}/api/news/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setSuccess('Новость удалена');
         fetchNews();
-      } catch (error) {
-        setError('Ошибка при удалении новости');
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          setError('Необходима авторизация');
+          navigate('/login');
+        } else {
+          setError('Ошибка при удалении новости');
+        }
       }
     }
   };
+
+  if (loading) {
+    return (
+      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   if (user?.role !== 'admin') {
     return (
@@ -217,7 +289,7 @@ const AdminNews: React.FC = () => {
           <DialogActions>
             <Button onClick={handleClose}>Отмена</Button>
             <Button type="submit" variant="contained" color="primary">
-              {editingNews ? 'Сохранить' : 'Создать'}
+              {editingNews ? 'Сохранить' : 'Добавить'}
             </Button>
           </DialogActions>
         </form>

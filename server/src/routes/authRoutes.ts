@@ -63,7 +63,7 @@ router.post('/register', validateRegistration, async (req, res) => {
 
     // Создание JWT токена
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { userId: user._id, role: user.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -107,7 +107,7 @@ router.post('/login', async (req, res) => {
 
     // Создание JWT токена
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { userId: user._id, role: user.role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -132,7 +132,7 @@ router.get('/profile', authenticate, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Требуется авторизация' });
     }
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.userId).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден' });
     }
@@ -146,7 +146,7 @@ router.get('/profile', authenticate, async (req, res) => {
 router.post('/change-password', authenticate, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user?.userId);
 
     if (!user) {
       return res.status(404).json({ message: 'Пользователь не найден' });

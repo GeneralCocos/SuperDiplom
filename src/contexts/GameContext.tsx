@@ -1,17 +1,16 @@
 import React, { createContext, useContext, useState } from 'react';
-import { GameResponse, AIMoveResponse } from '../types/api';
+import { GameResponse } from '../types/api';
 import { gameService } from '../services/gameService';
 
 interface GameContextType {
   gameId: string | null;
-  gameType: 'ai' | 'human' | null;
+  gameType: 'human' | null;
   playerColor: 'white' | 'black' | null;
   position: string;
   isPlayerTurn: boolean;
   gameOver: boolean;
-  startGame: (type: 'ai' | 'human') => Promise<void>;
+  startGame: (type: 'human') => Promise<void>;
   makeMove: (from: string, to: string, promotion?: string) => Promise<void>;
-  getAIMove: () => Promise<void>;
   resetGame: () => void;
 }
 
@@ -19,13 +18,13 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [gameId, setGameId] = useState<string | null>(null);
-  const [gameType, setGameType] = useState<'ai' | 'human' | null>(null);
+  const [gameType, setGameType] = useState<'human' | null>(null);
   const [playerColor, setPlayerColor] = useState<'white' | 'black' | null>(null);
   const [position, setPosition] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [gameOver, setGameOver] = useState(false);
 
-  const startGame = async (type: 'ai' | 'human') => {
+  const startGame = async (type: 'human') => {
     try {
       const response = await gameService.createGame(type);
       const { gameId: newGameId, color } = response as GameResponse;
@@ -51,29 +50,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (response.gameOver) {
         setGameOver(true);
-      } else if (gameType === 'ai') {
-        await getAIMove();
       }
     } catch (error) {
       console.error('Error making move:', error);
-      throw error;
-    }
-  };
-
-  const getAIMove = async () => {
-    if (!gameId || isPlayerTurn) return;
-
-    try {
-      const response = await gameService.getAIMove(position);
-      const aiMove = response as AIMoveResponse;
-      setPosition(aiMove.position);
-      setIsPlayerTurn(true);
-      
-      if (aiMove.gameOver) {
-        setGameOver(true);
-      }
-    } catch (error) {
-      console.error('Error getting AI move:', error);
       throw error;
     }
   };
@@ -98,7 +77,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         gameOver,
         startGame,
         makeMove,
-        getAIMove,
         resetGame
       }}
     >
